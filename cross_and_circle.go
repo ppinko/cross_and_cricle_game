@@ -144,12 +144,18 @@ func playGame() {
 				if d.difficulty == 1 {
 					row, col = d.computerMove()
 				} else {
-					action, field := d.preventLost()
-					if action {
+					win, field := d.preventLost(-1)
+					if win {
 						row = field / 3
 						col = field % 3
 					} else {
-						row, col = d.computerMove()
+						defend, field := d.preventLost(1)
+						if defend {
+							row = field / 3
+							col = field % 3
+						} else {
+							row, col = d.computerMove()
+						}
 					}
 				}
 				fmt.Println("Computer chose row no.", row, "and col no.", col)
@@ -262,7 +268,7 @@ func chooseDifficulty() int {
 	}
 }
 
-func (d *dataMembers) preventLost() (bool, int) {
+func (d *dataMembers) preventLost(numCheck int) (bool, int) {
 	for i := 0; i < len(d.board); i++ {
 		for j := 0; j < len(d.board[0]); j++ {
 			if d.board[i][j] == 0 {
@@ -272,8 +278,8 @@ func (d *dataMembers) preventLost() (bool, int) {
 						cp[k][l] = d.board[k][l]
 					}
 				}
-				cp[i][j] = 1
-				if isWin(cp, 1) {
+				cp[i][j] = numCheck
+				if isWin(cp, numCheck) {
 					return true, 3*i + j
 				}
 			}
