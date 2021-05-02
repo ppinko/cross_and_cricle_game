@@ -12,18 +12,13 @@ import (
 
 // game variables
 type dataMembers struct {
-	board   [3][3]int
-	missing int
+	board      [3][3]int
+	missing    int
+	difficulty int
 }
 
 func main() {
-
-	data := dataMembers{
-		missing: 9,
-	}
-	data.playGame()
-	data.printBoard()
-	data.userInput()
+	playGame()
 }
 
 func (d *dataMembers) printBoard() {
@@ -107,49 +102,73 @@ func (d *dataMembers) userInput() (int, int) {
 }
 
 // playGame starts new minesweeper game.
-func (d *dataMembers) playGame() {
+func playGame() {
 	fmt.Println("-----------------------------------------")
 	fmt.Println("WELCOME IN CROSS AND CIRCLE GAME")
-	fmt.Println("Please press an enter to start a game:")
-	fmt.Print("-> ")
-	reader := bufio.NewReader(os.Stdin)
-	reader.ReadString('\n')
 
-	// -1 - computer, 1 - player
-	turn := 1
-	for d.missing > 0 {
-		var row, col int
-		if turn == 1 {
-			row, col = d.userInput()
+	// infinite game loop
+	for {
+		lvl := chooseDifficulty()
+
+		// init game board
+		d := dataMembers{
+			missing:    9,
+			difficulty: lvl,
+		}
+
+		if d.difficulty != 1 {
+			fmt.Println("At the moment only beginner's level is available.\n")
+			continue
+		}
+
+		// random selection of first turn (player or computer)
+		source := rand.NewSource(time.Now().UnixNano())
+		r := rand.New(source)
+		beginn := r.Intn(2)
+		var turn int
+		if beginn == 0 {
+			turn = -1
+			fmt.Println("Computer starts this round.")
 		} else {
-			fmt.Println("Computer's turn!")
-			row, col = d.computerMove()
+			turn = 1
+			fmt.Println("You're lucky today! You start the game!")
 		}
 
-		(*d).board[row][col] = turn
-		d.printBoard()
-		(*d).missing -= 1
-
-		if d.isWin(turn) {
-			d.printBoard()
+		for d.missing > 0 {
+			var row, col int
 			if turn == 1 {
-				fmt.Println("Congratulations, you won!")
+				row, col = d.userInput()
 			} else {
-				fmt.Println("You lost!")
+				fmt.Println("Computer's turn!")
+				time.Sleep(5 * time.Second)
+				row, col = d.computerMove()
+				fmt.Println("Computer chose row no.", row, "and col no.", col)
 			}
-			fmt.Println("Please press an enter to leave the game:")
-			fmt.Print("-> ")
-			reader.ReadString('\n')
+
+			d.board[row][col] = turn
+			d.missing -= 1
+
+			if d.isWin(turn) {
+				d.printBoard()
+				if turn == 1 {
+					fmt.Println("\nCongratulations, you won!\n")
+				} else {
+					fmt.Println("\nYou lost!\n")
+				}
+				break
+			}
+
+			if turn == 1 {
+				d.printBoard()
+			}
+
+			// change turn
+			turn *= -1
 		}
-
-		// change turn
-		turn *= -1
+		if d.missing == 0 {
+			fmt.Println("A draw!")
+		}
 	}
-
-	fmt.Println("A draw!")
-	fmt.Println("Please press an enter to leave the game:")
-	fmt.Print("-> ")
-	reader.ReadString('\n')
 }
 
 func isValidField(d *dataMembers, row int, col int) bool {
@@ -195,4 +214,40 @@ func (d *dataMembers) computerMove() (int, int) {
 	val := emptyFields[newPosition]
 
 	return val / 3, val % 3
+}
+
+func chooseDifficulty() int {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Println("There are three difficulty levels available: ")
+		fmt.Println("	# beginner      - option 1")
+		fmt.Println("	# medium        - option 2")
+		fmt.Println("	# unbeatable    - option 3")
+		for {
+			fmt.Println("Please choose a dificulty level to (type 1, 2 or 3): ")
+			fmt.Print("-> ")
+			lvl, _ := reader.ReadString('\n')
+			lvl = strings.Replace(lvl, "\n", "", -1)
+			lvl = strings.ToUpper(lvl)
+			if len(lvl) == 1 && lvl == "Q" {
+				fmt.Println("Thank you very much for the game! Have a great day!")
+				fmt.Println("Game will be closed in 5 seconds.")
+				time.Sleep(5 * time.Second)
+				os.Exit(0)
+			}
+			if len(lvl) != 1 || lvl < "1" || lvl > "3" {
+				fmt.Println("Invalid input!")
+				continue
+			}
+
+			lvlNumber, err := strconv.Atoi(lvl)
+			if err != nil {
+				fmt.Println("Invalid input!")
+				continue
+			}
+
+			return lvlNumber
+		}
+	}
 }
