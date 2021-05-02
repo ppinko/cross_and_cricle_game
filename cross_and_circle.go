@@ -92,6 +92,12 @@ func (d *dataMembers) userInput() (int, int) {
 			fmt.Println("Invalid input!")
 			continue
 		}
+
+		if !isValidField(d, rowNumber, colNumber) {
+			fmt.Println("Invalid input! This field has already been set.")
+			continue
+		}
+
 		return rowNumber, colNumber
 	}
 }
@@ -100,15 +106,16 @@ func (d *dataMembers) userInput() (int, int) {
 func playGame() {
 	fmt.Println("-----------------------------------------")
 	fmt.Println("WELCOME IN CROSS AND CIRCLE GAME")
-	fmt.Println("Please press any key to start a game ('Q' to quit):")
+	fmt.Println("Please press an enter to start a game:")
 	fmt.Print("-> ")
 	reader := bufio.NewReader(os.Stdin)
-	input, _ := reader.ReadString('\n')
-	input = strings.Replace(input, "\n", "", -1)
-	input = strings.ToUpper(input)
-	// validation of the input
-	if input == "Q" {
-		fmt.Println("Thank you very much for the game! Have a great day!")
-		os.Exit(0)
+	reader.ReadString('\n')
+}
+
+func isValidField(d *dataMembers, row int, col int) bool {
+	if (*d).board[row][col] == 0 {
+		return true
+	} else {
+		return false
 	}
 }
