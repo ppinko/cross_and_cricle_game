@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+func main() {
+	playGame()
+}
+
 // game variables
 type dataMembers struct {
 	board      [3][3]int
@@ -18,10 +22,7 @@ type dataMembers struct {
 	difficulty int
 }
 
-func main() {
-	playGame()
-}
-
+// Print current state of the game
 func (d *dataMembers) printBoard() {
 	fmt.Println()
 	for i, row := range d.board {
@@ -33,6 +34,10 @@ func (d *dataMembers) printBoard() {
 	fmt.Println()
 }
 
+// Print one row of the game board
+//
+// Function arguments:
+// row - slice of data to print
 func printRow(row [3]int) {
 	line := ""
 	for i, val := range row {
@@ -51,6 +56,8 @@ func printRow(row [3]int) {
 	fmt.Println(line)
 }
 
+// Ask player for input and validate the input.
+// Return choose row and column to mark, or exit the game when 'Q' is pressed.
 func (d *dataMembers) userInput() (int, int) {
 	// create an instance of buffered I/O
 	reader := bufio.NewReader(os.Stdin)
@@ -102,7 +109,7 @@ func (d *dataMembers) userInput() (int, int) {
 	}
 }
 
-// playGame starts new minesweeper game.
+// Main game loop
 func playGame() {
 	fmt.Println("-----------------------------------------")
 	fmt.Println("WELCOME IN CROSS AND CIRCLE GAME")
@@ -203,6 +210,13 @@ func playGame() {
 	}
 }
 
+// Validates if given field is already occupied.
+// Return true if the field is not occupied, otherwise false.
+//
+// Function arguments:
+// d - instance of game variables with board to check
+// row - number of row to check
+// col - number of column to check
 func isValidField(d *dataMembers, row int, col int) bool {
 	if (*d).board[row][col] == 0 {
 		return true
@@ -211,6 +225,12 @@ func isValidField(d *dataMembers, row int, col int) bool {
 	}
 }
 
+// Validate if latest move won the game.
+// Return true in case of win, false otherwise.
+//
+// Function arguments:
+// d - matrix representing current board
+// turn - latest player (1 # player, -1 # computer)
 func isWin(d [3][3]int, turn int) bool {
 	for i := 0; i < len(d); i++ {
 		if d[i][0] == turn && d[i][1] == turn && d[i][2] == turn {
@@ -230,6 +250,8 @@ func isWin(d [3][3]int, turn int) bool {
 	return false
 }
 
+// Choose next computer's move
+// Return two ints, representing number of row and column choosen
 func (d *dataMembers) computerMove() (int, int) {
 	var emptyFields []int
 	for i := 0; i < len(d.board); i++ {
@@ -248,6 +270,11 @@ func (d *dataMembers) computerMove() (int, int) {
 	return val / 3, val % 3
 }
 
+// Ask user for difficulty level
+// Return int representing difficulty level.
+// 	# beginner      - option 1
+//	# medium        - option 2
+//	# unbeatable    - option 3
 func chooseDifficulty() int {
 	reader := bufio.NewReader(os.Stdin)
 
@@ -284,6 +311,9 @@ func chooseDifficulty() int {
 	}
 }
 
+// Check if there is possibility to win/lose in one move.
+// If true, it return true and int representing next field to choose.
+// Otherwise, it returns false and -1.
 func (d *dataMembers) preventLost(numCheck int) (bool, int) {
 	for i := 0; i < len(d.board); i++ {
 		for j := 0; j < len(d.board[0]); j++ {
@@ -304,6 +334,8 @@ func (d *dataMembers) preventLost(numCheck int) (bool, int) {
 	return false, -1
 }
 
+// Find the best possible move in unbeatable level.
+// Return int representing the best next move.
 func (d *dataMembers) bestMove() int {
 	fmt.Println("Number of missing fields:", d.missing)
 	corners := [4]int{0, 2, 6, 8}
@@ -417,6 +449,12 @@ func (d *dataMembers) bestMove() int {
 	return 0
 }
 
+// Find closest free field to occupied fields.
+// Return int representing the described field.
+//
+// Function arguments:
+// x - 1st occupied field
+// y - 2nd occupied field
 func findDistance(x int, y int) int {
 	ix := x / 3
 	iy := y / 3
