@@ -338,10 +338,13 @@ func (d *dataMembers) preventLost(numCheck int) (bool, int) {
 // Return int representing the best next move.
 func (d *dataMembers) bestMove() int {
 	fmt.Println("Number of missing fields:", d.missing)
+	// slice with all matrix corners
 	corners := [4]int{0, 2, 6, 8}
+	// center field is the best field, if it is not occupy, choose it
 	if d.board[1][1] == 0 {
 		return 1*3 + 1
 	}
+	// choose random corner
 	if d.missing == 8 {
 		source := rand.NewSource(time.Now().UnixNano())
 		r := rand.New(source)
@@ -349,6 +352,7 @@ func (d *dataMembers) bestMove() int {
 		return corners[newPosition]
 	}
 	if d.missing == 7 {
+		// find occupied by player field
 		var playerField int
 		for i := 0; i < 9; i++ {
 			if d.board[i/3][i%3] == 1 {
@@ -357,6 +361,7 @@ func (d *dataMembers) bestMove() int {
 			}
 		}
 		for _, val := range corners {
+			// board without a chance to win
 			if val == playerField {
 				if playerField+3 <= 8 {
 					return playerField + 3
@@ -365,6 +370,8 @@ func (d *dataMembers) bestMove() int {
 				}
 			}
 		}
+		// computer has a winning position
+		// choose any corner neighbouring the filed occupied by player
 		if playerField%3 != 2 {
 			if playerField+1 != 4 {
 				return playerField + 1
@@ -377,23 +384,26 @@ func (d *dataMembers) bestMove() int {
 	}
 	if d.missing == 6 {
 		risk, move := d.preventLost(1)
+		// defend yourself from losing
 		if risk {
 			return move
 		} else {
 			if d.board[1][1] == 1 {
 				for _, val := range corners {
+					// chose first free corner
 					if d.board[val/3][val%3] == 0 {
 						return val
 					}
 				}
 			} else {
+				// store two fields occupied by player
 				var occupiedFields []int
 				for i := 0; i < 9; i++ {
 					if d.board[i/3][i%3] == 1 {
 						occupiedFields = append(occupiedFields, i)
 					}
 				}
-				// logic for finding the nearest point
+				// find nearest free field to two occupied fields by player
 				minVal := 10
 				index := 0
 				for i := 0; i < 9; i++ {
@@ -415,14 +425,16 @@ func (d *dataMembers) bestMove() int {
 	}
 	if d.missing == 5 {
 		win, move := d.preventLost(-1)
+		// check possibility of winning
 		if win {
 			return move
 		}
 		risk, move2 := d.preventLost(1)
+		// defend yourself from losing
 		if risk {
 			return move2
 		}
-		// logic for finding the nearest point
+		// store two fields occupied by player
 		minVal := 10
 		index := 0
 		var occupiedFields []int
@@ -431,6 +443,7 @@ func (d *dataMembers) bestMove() int {
 				occupiedFields = append(occupiedFields, i)
 			}
 		}
+		// find nearest free field to two occupied fields by player
 		for i := 0; i < 9; i++ {
 			if i != 4 && d.board[i/3][i%3] == 0 {
 				val1 := findDistance(i, occupiedFields[0])
@@ -446,6 +459,7 @@ func (d *dataMembers) bestMove() int {
 		}
 		return index
 	}
+	// this line will never be reached, function pre-exist before
 	return 0
 }
 
