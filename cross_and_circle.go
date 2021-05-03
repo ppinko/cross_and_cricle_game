@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"strconv"
@@ -116,11 +117,6 @@ func playGame() {
 			difficulty: lvl,
 		}
 
-		if d.difficulty > 2 {
-			fmt.Println("At the moment only unbeatable's level is not available.\n")
-			continue
-		}
-
 		// random selection of first turn (player or computer)
 		source := rand.NewSource(time.Now().UnixNano())
 		r := rand.New(source)
@@ -143,7 +139,7 @@ func playGame() {
 				time.Sleep(5 * time.Second)
 				if d.difficulty == 1 {
 					row, col = d.computerMove()
-				} else {
+				} else if d.difficulty == 2 {
 					win, field := d.preventLost(-1)
 					if win {
 						row = field / 3
@@ -155,6 +151,26 @@ func playGame() {
 							col = field % 3
 						} else {
 							row, col = d.computerMove()
+						}
+					}
+				} else {
+					if d.missing >= 5 {
+						move := d.bestMove()
+						row = move / 3
+						col = move % 3
+					} else {
+						win, field := d.preventLost(-1)
+						if win {
+							row = field / 3
+							col = field % 3
+						} else {
+							defend, field := d.preventLost(1)
+							if defend {
+								row = field / 3
+								col = field % 3
+							} else {
+								row, col = d.computerMove()
+							}
 						}
 					}
 				}
@@ -286,4 +302,129 @@ func (d *dataMembers) preventLost(numCheck int) (bool, int) {
 		}
 	}
 	return false, -1
+}
+
+func (d *dataMembers) bestMove() int {
+	fmt.Println("Number of missing fields:", d.missing)
+	corners := [4]int{0, 2, 6, 8}
+	if d.board[1][1] == 0 {
+		return 1*3 + 1
+	}
+	if d.missing == 8 {
+		source := rand.NewSource(time.Now().UnixNano())
+		r := rand.New(source)
+		newPosition := r.Intn(4)
+		return corners[newPosition]
+	}
+	if d.missing == 7 {
+		var playerField int
+		for i := 0; i < 9; i++ {
+			if d.board[i/3][i%3] == 1 {
+				playerField = i
+				break
+			}
+		}
+		for _, val := range corners {
+			if val == playerField {
+				if playerField+3 <= 8 {
+					return playerField + 3
+				} else {
+					return playerField - 3
+				}
+			}
+		}
+		if playerField%3 != 2 {
+			if playerField+1 != 4 {
+				return playerField + 1
+			} else {
+				return playerField - 3
+			}
+		} else {
+			return playerField - 3
+		}
+	}
+	if d.missing == 6 {
+		risk, move := d.preventLost(1)
+		if risk {
+			return move
+		} else {
+			if d.board[1][1] == 1 {
+				for _, val := range corners {
+					if d.board[val/3][val%3] == 0 {
+						return val
+					}
+				}
+			} else {
+				var occupiedFields []int
+				for i := 0; i < 9; i++ {
+					if d.board[i/3][i%3] == 1 {
+						occupiedFields = append(occupiedFields, i)
+					}
+				}
+				// logic for finding the nearest point
+				minVal := 10
+				index := 0
+				for i := 0; i < 9; i++ {
+					if i != 4 && d.board[i/3][i%3] == 0 {
+						val1 := findDistance(i, occupiedFields[0])
+						val2 := findDistance(i, occupiedFields[1])
+						if val1+val2 < minVal {
+							index = i
+							minVal = val1 + val2
+							if minVal == 2 {
+								return index
+							}
+						}
+					}
+				}
+				return index
+			}
+		}
+	}
+	if d.missing == 5 {
+		win, move := d.preventLost(-1)
+		if win {
+			return move
+		}
+		risk, move2 := d.preventLost(1)
+		if risk {
+			return move2
+		}
+		// logic for finding the nearest point
+		minVal := 10
+		index := 0
+		var occupiedFields []int
+		for i := 0; i < 9; i++ {
+			if d.board[i/3][i%3] == -1 {
+				occupiedFields = append(occupiedFields, i)
+			}
+		}
+		for i := 0; i < 9; i++ {
+			if i != 4 && d.board[i/3][i%3] == 0 {
+				val1 := findDistance(i, occupiedFields[0])
+				val2 := findDistance(i, occupiedFields[1])
+				if val1+val2 < minVal {
+					index = i
+					minVal = val1 + val2
+					if minVal == 1 {
+						return index
+					}
+				}
+			}
+		}
+		return index
+	}
+	return 0
+}
+
+func findDistance(x int, y int) int {
+	ix := x / 3
+	iy := y / 3
+	jx := x % 3
+	jy := y % 3
+	if math.Abs(float64(ix)-float64(iy)) <= 1.5 && math.Abs(float64(jx)-float64(jy)) <= 1.5 {
+		return 1
+	} else {
+		return 2
+	}
 }
